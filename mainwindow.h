@@ -5,14 +5,17 @@
 
 #include "carmodel.h"
 #include "passenger.h"
+#include "timer.h"
 
 #include <iostream>
 using namespace std;
-#include <queue>
+#include <list>
+
+#include <QDebug>
 
 
 const int NUM_CARS = 2;
-const int NUM_PASSENGERS = 5;
+const int NUM_PASSENGERS = 3;
 
 
 QT_BEGIN_NAMESPACE
@@ -30,7 +33,11 @@ public:
     CarModel *cars[NUM_CARS];
     Passenger *people[NUM_PASSENGERS];
 
-    queue<Passenger*> pickup_requests;
+    list<Passenger*> pickup_requests;
+
+    Timer *control_clock;
+    bool determine_elevator(Passenger*);
+    void create_pickup_request();
 
 private:
     Ui::MainWindow *ui;
@@ -44,8 +51,8 @@ private slots:
     void normal();
     void add_request(Passenger*);
 
-
-
+signals:
+    void request_upcoming_passenger(Passenger*);
 
 };
 #endif // MAINWINDOW_H

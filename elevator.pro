@@ -19,12 +19,14 @@ SOURCES += \
     carmodel.cpp \
     main.cpp \
     mainwindow.cpp \
-    passenger.cpp
+    passenger.cpp \
+    timer.cpp
 
 HEADERS += \
     carmodel.h \
     mainwindow.h \
-    passenger.h
+    passenger.h \
+    timer.h
 
 FORMS += \
     mainwindow.ui

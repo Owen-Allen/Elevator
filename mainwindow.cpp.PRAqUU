@@ -21,15 +21,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Initialize Passengers
     QString names[5] = {"Owen", "Cole", "Mej", "Migu", "Lord Farquad"};
-    int start[5] =  {1, 4, 5, 4, 5};
-    int end[5] =    {5, 1, 1, 7, 2};
+    int start[5] =  {1, 2, 3, 4, 5};
+    int end[5] =    {5, 4, 1, 7, 10};
 
     // Connect the passengers to the Main Window so they can call an elevator
     for(int i = 0; i < NUM_PASSENGERS; i++){
         people[i] = new Passenger(start[i], end[i], names[i]);
         //connect(people[i], SIGNAL(request(Passenger*)), this, SLOT(add_request(Passenger*)));
     }
-
 
     // Initialize Cars
     int curr_floor[2] =  {1, 4};
@@ -40,8 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
         cars[i] = new CarModel(curr_floor[i], dir[i]);
         connect(this, SIGNAL(request_upcoming_passenger(Passenger*)), cars[i], SLOT(add_to_upcoming_passengers(Passenger*)));
     }
-
-    //control_clock = new Timer();
 }
 
 
@@ -78,59 +75,81 @@ void MainWindow::normal(){
 
     // Fill the pickup_requests
     for(int i = 0; i < NUM_PASSENGERS; i++){
-        pickup_requests.push_back(people[i]);
+        pickup_requests.push_front(people[i]);
     }
-    
 
-    //control_clock ->interval();
 
     std::list<Passenger*>:: iterator it = pickup_requests.begin();
+
     while(it != pickup_requests.end()){
+
         if(determine_elevator(*it)){
-            qDebug() << "added " << (*it) -> name << " to an upcoming_pickup";
-            // the Passenger has been moved to an upcoming_request for an elevator,
-            // so we can remove them from pickup_requests
-            it = pickup_requests.erase(it);
+            // the passenger has been added an elevators upcoming_passengers, so we can remove them from pickup_requests
+            it = passengers.erase(it);
         }else{
-            qDebug() << "could not add " << (*it)->name << " to an upcoming_pickup";
             ++it;
         }
+
+
     }
-    
-    /*
+
+
+    if(true){
         qDebug() << "Front of pickup_requests " << pickup_requests.front()->toString();
         connect(pickup_requests.front(), SIGNAL(request_elevator(Passenger*)), cars[0], SLOT(add_to_upcoming_passengers(Passenger*)));
         pickup_requests.front() -> send_elevator_request();
-    */
+    }
+
+    cars[0]->move();
+
+    //ui->label->setText(cars[0]->toString());
+
+    cars[0]->move();
+
+    cars[0]->move();
+
+    cars[0]->move();
+
+    cars[0]->move();
+
+
+    ui->label->setText(cars[0]->toString());
 }
 
-
-void MainWindow::create_pickup_request(){
-    // Create a random new request
-    // MAKE SURE TO PUSH_BACK of pickup_requests
-}
-
-bool MainWindow::determine_elevator(Passenger* p){
-    // Try to add this passenger to an elevators upcoming_requests
-    // if they are added, return true, else return false
-
-    // PASSENGER CAN BE ADDED TO AN ELEVATORS upcoming_passengers UNDER 2 CONDITIONS
-    // 1: the car is not currently moving
-    // 2: the car is heading toward the passenger(as if they hit the "up" arrow)
-    //   2a: if the elevators current floor is HIGHER than p, then their direction must be -1
-    //   2b: if the elevators current floor is LOWER than p, then their direction must be 1
-    qDebug() << p->toString();
-
-    for(int e = 0; e < NUM_CARS; e++){
-        qDebug() << cars[e]->toString();
-        if(cars[e]->direction == 0 || (cars[e]->direction == p->direction && cars[e]->current_floor < p->current_floor) ||  (cars[e]->direction == p->direction && cars[e]->current_floor > p->current_floor)){
-            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            p->send_elevator_request();
-            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            return true;
+bool MainWindow::determine_elevator(){
+    // Loop through the queue and try and add the passenger to an elevators next queue
+    qInfo("determine elevator");
+    //int r_dir;
+    /*
+    for (std::list<Passenger*>::iterator r = pickup_requests.begin(); r != pickup_requests.end(); ++r){
+        
+        //bool found_elevator = false;
+        // Which way does the requester want to go?
+        if(r->current_floor < r->destination_floor){
+            r_dir = 1; //up
+        }else{
+            r_dir = -1;
+        }
+        
+        // Now see if there are any available elevators, or elevators that are going in the same direction
+        
+        for(int e = 0; e < NUM_CARS; e++){
+            if(!elevators[e]->isMoving || elevators[e]->direction == r_dir){
+                // MAYBE WE SHOULD CALL A FUNCTION IN ELEVATOR??
+                    // we need to add the passenger, update the elevators list of to do
+                    // and check if we need to re-evaluate its final destination
+                
+                // Add the passenger to the elevators pickup list
+                elevators[e]->next_passengers.push(r);
+                if(elevators[e]->destination >)
+                
+                // remove the passenger from the list of passengers to be assigned
+                pickup_requests.erase(r++);
+                break;
+            }
         }
     }
-    return false; // Could not find a suitable elevator, try again next iteration
+    */
 }
 
 

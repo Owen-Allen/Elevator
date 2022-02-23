@@ -8,6 +8,9 @@ using namespace std;
 #include <list>
 #include <unordered_set>
 
+#include <QDebug>
+#include <QString>
+
 
 class CarModel: public QObject
 {
@@ -26,7 +29,7 @@ public:
 
     // Add the passenger to upcoming_passengers when they
     // request an elevator
-    void add_to_upcoming_passengers(Passenger*);
+    //void add_to_upcoming_passengers(Passenger*);
     
     // Add the passenger to passengers when we pick them up
     void add_to_passengers(Passenger*);
@@ -35,14 +38,20 @@ public:
     void pickup_passengers();
     void dropoff_passengers();
     
-    
+    void calculate_direction();
     void move();
+    void send_location_update();
 
-
+    QString toString();
 
 private slots:
-    void add_to_destinations(int); // Called when Passenger requests pickup AND when they get on
+    //void add_to_passengers(Passenger*);
+    void add_to_upcoming_passengers(Passenger*);
 
+
+signals:
+    //void update_passenger_floor(int);
+    void send_location_update(int);
 };
 
 
