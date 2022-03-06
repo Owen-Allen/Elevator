@@ -69,24 +69,14 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>60</x>
-      <y>270</y>
-      <width>281</width>
-      <height>231</height>
+      <x>250</x>
+      <y>100</y>
+      <width>511</width>
+      <height>431</height>
      </rect>
     </property>
     <property name="text">
      <string>Label</string>
-    </property>
-   </widget>
-   <widget class="QListView" name="listView">
-    <property name="geometry">
-     <rect>
-      <x>420</x>
-      <y>190</y>
-      <width>256</width>
-      <height>192</height>
-     </rect>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_5">

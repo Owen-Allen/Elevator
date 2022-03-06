@@ -20,7 +20,6 @@ public:
 
     int current_floor;
     int direction; //-1 for down, 1 for up, 0 for not moving
-    //bool isMoving;
 
     std::list<Passenger*> passengers;
     std::list<Passenger*> upcoming_passengers;
@@ -40,18 +39,33 @@ public:
     
     void calculate_direction();
     void move();
-    void send_location_update();
 
     QString toString();
+
+private:
+    bool isOverload;
+    bool isFire;
+    bool isPowerOut;
+    bool isDoorBlocked;
+    bool needHelp;
+    int safeFloor;
+
+    void emergency_destination();
+
+signals:
+    //void update_passenger_floor(int);
+    void send_location_update(int);
+    void change_destination(int);
 
 private slots:
     //void add_to_passengers(Passenger*);
     void add_to_upcoming_passengers(Passenger*);
 
-
-signals:
-    //void update_passenger_floor(int);
-    void send_location_update(int);
+    void receive_overload();
+    void receive_fire();
+    void receive_power();
+    void receive_door();
+    void receive_help();
 };
 
 

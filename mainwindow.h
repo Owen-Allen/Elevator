@@ -15,7 +15,7 @@ using namespace std;
 
 
 const int NUM_CARS = 2;
-const int NUM_PASSENGERS = 3;
+const int NUM_PASSENGERS = 5;
 
 
 QT_BEGIN_NAMESPACE
@@ -35,12 +35,23 @@ public:
 
     list<Passenger*> pickup_requests;
 
-    Timer *control_clock;
+    QTimer *control_clock;
     bool determine_elevator(Passenger*);
-    void create_pickup_request();
+    void create_pickup_request(); // not in use?
+
 
 private:
     Ui::MainWindow *ui;
+
+signals:
+    void request_upcoming_passenger(Passenger*); // not in use
+
+    void send_overload();
+    void send_fire();
+    void send_powerout();
+    void send_doorblocked();
+    void send_help();
+
 
 private slots:
     void overload_sensor();
@@ -49,10 +60,7 @@ private slots:
     void door_sensor();
     void help();
     void normal();
-    void add_request(Passenger*);
-
-signals:
-    void request_upcoming_passenger(Passenger*);
+//    void add_request(Passenger*);
 
 };
 #endif // MAINWINDOW_H

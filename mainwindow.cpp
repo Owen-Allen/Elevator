@@ -20,15 +20,16 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     // Initialize Passengers
-    QString names[5] = {"Owen", "Cole", "Mej", "Migu", "Lord Farquad"};
+    QString names[5] = {"Shrek", "Donkey", "Fiona", "Puss in Boots", "Lord Farquad"};
     int start[5] =  {1, 4, 5, 4, 5};
     int end[5] =    {5, 1, 1, 7, 2};
 
     // Connect the passengers to the Main Window so they can call an elevator
     for(int i = 0; i < NUM_PASSENGERS; i++){
         people[i] = new Passenger(start[i], end[i], names[i]);
-        //connect(people[i], SIGNAL(request(Passenger*)), this, SLOT(add_request(Passenger*)));
+        pickup_requests.push_back(people[i]);
     }
+
 
 
     // Initialize Cars
@@ -38,10 +39,20 @@ MainWindow::MainWindow(QWidget *parent)
 
     for (int i = 0; i < NUM_CARS; i++){
         cars[i] = new CarModel(curr_floor[i], dir[i]);
-        connect(this, SIGNAL(request_upcoming_passenger(Passenger*)), cars[i], SLOT(add_to_upcoming_passengers(Passenger*)));
+        //connect(this, SIGNAL(request_upcoming_passenger(Passenger*)), cars[i], SLOT(add_to_upcoming_passengers(Passenger*)));
     }
 
-    //control_clock = new Timer();
+    QString display_string = QString();
+    for(int e = 0; e < NUM_CARS; e++){
+        cars[e]->move();
+        QString car_num = QString("Elevator %1 \n").arg(e);
+        display_string.append(car_num);
+        display_string.append(cars[e]->toString()).append("\n");
+    }
+    ui->label->setText(display_string);
+
+    control_clock = new QTimer(this);
+    connect(control_clock, SIGNAL(timeout()), this, SLOT(normal()));
 }
 
 
@@ -76,27 +87,28 @@ void MainWindow::normal(){
     // GAME LOOP SHOULD OCCUR HERE
     qInfo("Normal");
 
-    // Fill the pickup_requests
-    for(int i = 0; i < NUM_PASSENGERS; i++){
-        pickup_requests.push_back(people[i]);
-    }
-    
-
-    //control_clock ->interval();
-
     std::list<Passenger*>:: iterator it = pickup_requests.begin();
     while(it != pickup_requests.end()){
         if(determine_elevator(*it)){
             qDebug() << "added " << (*it) -> name << " to an upcoming_pickup";
-            // the Passenger has been moved to an upcoming_request for an elevator,
-            // so we can remove them from pickup_requests
+                // the Passenger has been moved to an upcoming_request for an elevator,
+                // so we can remove them from pickup_requests
             it = pickup_requests.erase(it);
         }else{
             qDebug() << "could not add " << (*it)->name << " to an upcoming_pickup";
             ++it;
         }
     }
-    
+
+    QString display_string = QString();
+    for(int e = 0; e < NUM_CARS; e++){
+        cars[e]->move();
+        QString car_num = QString("Elevator %1 \n").arg(e);
+        display_string.append(car_num);
+        display_string.append(cars[e]->toString()).append("\n");
+    }
+    ui->label->setText(display_string);
+    control_clock->start(5000);
     /*
         qDebug() << "Front of pickup_requests " << pickup_requests.front()->toString();
         connect(pickup_requests.front(), SIGNAL(request_elevator(Passenger*)), cars[0], SLOT(add_to_upcoming_passengers(Passenger*)));
@@ -119,25 +131,49 @@ bool MainWindow::determine_elevator(Passenger* p){
     // 2: the car is heading toward the passenger(as if they hit the "up" arrow)
     //   2a: if the elevators current floor is HIGHER than p, then their direction must be -1
     //   2b: if the elevators current floor is LOWER than p, then their direction must be 1
+
     qDebug() << p->toString();
 
     for(int e = 0; e < NUM_CARS; e++){
         qDebug() << cars[e]->toString();
-        if(cars[e]->direction == 0 || (cars[e]->direction == p->direction && cars[e]->current_floor < p->current_floor) ||  (cars[e]->direction == p->direction && cars[e]->current_floor > p->current_floor)){
+    /*
+        if(cars[e]->direction == 0 || ((cars[e]->direction == p->direction) && (cars[e]->current_floor < p->current_floor)) || ((cars[e]->direction == p->direction) && (cars[e]->current_floor > p->current_floor))){
             connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
             p->send_elevator_request();
             disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+            qDebug() << "Car after update " << cars[e]->toString();
+            return true;
+        }
+        */
+        if(cars[e]-> direction == 0){
+            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+            p->send_elevator_request();
+            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+            qDebug() << "Car after update " << cars[e]->toString();
+            return true;
+        }else if(cars[e]->direction == 1 && p->direction == 1 && p->current_floor > cars[e]->current_floor){ // elevator can head up toward the person
+            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+            p->send_elevator_request();
+            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+            qDebug() << "Car after update " << cars[e]->toString();
+            return true;
+        }else if(cars[e]->direction == -1 && p->direction == -1 && p->current_floor < cars[e]->current_floor){ // elevator can head down to pickup the person
+            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+            p->send_elevator_request();
+            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+            qDebug() << "Car after update " << cars[e]->toString();
             return true;
         }
     }
     return false; // Could not find a suitable elevator, try again next iteration
 }
 
-
+/*
 // SLOTS
 void MainWindow::add_request(Passenger* p){
     pickup_requests.push_front(p);
 }
+*/
 
 
 

@@ -12,7 +12,6 @@ class Passenger: public QObject
 {
      Q_OBJECT
 public:
-    //passenger();
     Passenger(int curr, int dest, QString name);
     int current_floor;
     int destination_floor;
@@ -27,14 +26,16 @@ public:
     QString toString();
 
 
+signals:
+    void request_elevator(Passenger*); // Request from passenger to elevator
+
 
 private slots:
     void update_current_floor(int); // Slot for CarModel signal
 
+    void change_destination(int);
 
-signals:
-    //void request(Passenger*);
-    void request_elevator(Passenger*); // Request from passenger to elevator
+
 };
 
 #endif // PASSENGER_H

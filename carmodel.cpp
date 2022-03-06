@@ -1,18 +1,17 @@
 #include "carmodel.h"
-/*
-CarModel::CarModel()
-{
-    this->current_floor = 1;
-    this->direction = 1;
-    this->isMoving = false;
-}
-*/
+
 
 CarModel::CarModel(int curr_floor, int dir):QObject(NULL)
 {
     this->current_floor = curr_floor;
     this->direction = dir;
-   // this->isMoving = moving;
+
+    isOverload = false;
+    isFire = false;
+    isPowerOut = false;
+    isDoorBlocked = false;
+    needHelp = false;
+    safeFloor = 1;
 }
 
 
@@ -62,9 +61,9 @@ void CarModel::add_to_upcoming_passengers(Passenger* upcoming_passenger){
         destinations.insert(upcoming_passenger->current_floor);
         if(this->direction == 0){
             qInfo("Calling calculate direction");
-            calculate_direction();
         }
     }
+     calculate_direction();
 }
 
 void CarModel::add_to_passengers(Passenger* new_passenger){
@@ -72,6 +71,7 @@ void CarModel::add_to_passengers(Passenger* new_passenger){
     destinations.insert(new_passenger->destination_floor);
 
     connect(this, SIGNAL(send_location_update(int)), new_passenger, SLOT(update_current_floor(int)));
+
 }
 
 void CarModel::pickup_passengers(){
@@ -105,26 +105,45 @@ void CarModel::calculate_direction(){
 
     // TWO SCENARIOS WHERE YOU SHOULD CHANGE THE DIRECTION
 
-    // 1: Currently not moving && have a destination to go to
+    // 1: have a destination to go to
     // 2: Currently ARE moving && have no destinations
 
-    if (this->direction == 0 && destinations.size()){ // Scenario 1
-
+    if (destinations.size()){
         // Need to go up
-
-
         if(*destinations.begin() > current_floor){
-            qInfo("Going up");
             this->direction = 1;
-            qDebug() << "THIS IS THE DIRECTION " << this->direction;
-
         // Need to go down
         }else if(*destinations.begin() < current_floor){
             this->direction = -1;
         }
-
     }else if(this->direction != 0 && destinations.size() == 0){ // Scenario 2
         this->direction = 0;
+    }
+}
+
+
+void CarModel::emergency_destination(){
+    // CLEAR ALL DESTINATIONS
+    destinations.clear();
+
+    // add the safe floor to destinations
+    destinations.insert(safeFloor);
+
+    std::list<Passenger*>:: iterator it = passengers.begin();
+    while (it != passengers.end()){
+        connect(this, SIGNAL(change_destination(int)), *it, SLOT(change_destination(int)));
+        ++it;
+    }
+    emit change_destination(safeFloor);
+
+    calculate_direction();
+
+    current_floor += direction;
+
+    emit send_location_update(current_floor);
+
+    if (current_floor == safeFloor){
+        dropoff_passengers();
     }
 }
 
@@ -134,25 +153,55 @@ void CarModel::move(){
 
     // CHECK ALL THE HAZARDS
 
-    // Update the current floor
-    current_floor += direction;
+    if(isOverload){
 
-    emit send_location_update(current_floor);
+    }else if(isFire){
 
-    // Is the current floor in our list of destinations?
-    for(auto it = destinations.begin(); it != destinations.end(); ){
-        if((*it) == this->current_floor){
-            qDebug() << " PICKING UP / DROPPING OFF AT " << current_floor;
-            dropoff_passengers();
-            pickup_passengers();
-            destinations.erase(it);
-            break;
-        }else{
-            ++it;
+    }else if(isPowerOut){
+
+    }else if(isDoorBlocked){
+
+    }else if(needHelp){
+
+    }else{ // Everything is working properly
+        // Update the current floor
+        current_floor += direction;
+
+        emit send_location_update(current_floor);
+
+        // Is the current floor in our list of destinations?
+        for(auto it = destinations.begin(); it != destinations.end(); ){
+            if((*it) == this->current_floor){
+                qDebug() << " PICKING UP / DROPPING OFF AT " << current_floor;
+                dropoff_passengers();
+                if(!isOverload && !isFire && !isPowerOut && !isDoorBlocked )
+                    pickup_passengers();
+                destinations.erase(it);
+                break;
+            }else{
+                ++it;
+            }
         }
     }
-
     // See if we need to change direction since everyone may have gotten off
     calculate_direction();
-
 }
+
+void CarModel::receive_overload(){
+    isOverload = true;
+}
+void CarModel::receive_fire(){
+    isFire = true;
+}
+void CarModel::receive_power(){
+    isPowerOut = true;
+}
+void CarModel::receive_door(){
+    isDoorBlocked = true;
+}
+
+void CarModel::receive_help(){
+    needHelp = true;
+}
+
+

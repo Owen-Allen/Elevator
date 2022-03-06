@@ -1,7 +1,6 @@
 #include "passenger.h"
 
 
-
 Passenger::Passenger(int curr, int dest, QString name):QObject(NULL)
 {
     this->current_floor = curr;
@@ -29,12 +28,14 @@ QString Passenger::toString(){
 }
 
 void Passenger::send_elevator_request(){
-    qInfo("sending_elevator_request");
     emit request_elevator(this);
 }
 
 
 void Passenger::update_current_floor(int new_floor){    
     this->current_floor = new_floor;
-    qInfo("passengers current floor is %d", this->current_floor);
+}
+
+void Passenger::change_destination(int new_destination){
+    this->destination_floor = new_destination;
 }
