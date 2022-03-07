@@ -124,13 +124,7 @@ void MainWindow::normal(){
         display_string.append(cars[e]->toString()).append("\n");
     }
     ui->label->setText(display_string);
-    //control_clock->start(5000);
-}
-
-
-void MainWindow::create_pickup_request(){
-    // Create a random new request
-    // MAKE SURE TO PUSH_BACK of pickup_requests
+    control_clock->start(5000); // COMMENT THIS OUT TO MANAGE FLOW MANUALLY
 }
 
 bool MainWindow::determine_elevator(Passenger* p){

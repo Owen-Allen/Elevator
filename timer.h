@@ -17,3 +17,5 @@ public slots:
 };
 
 #endif // TIMER_H
+
+

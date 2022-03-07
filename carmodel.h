@@ -58,7 +58,7 @@ private:
     void emergency_destination();
 
 signals:
-    //void update_passenger_floor(int);
+    //void update_passengeupr_floor(int);
     void send_location_update(int);
     void change_destination(int);
 
