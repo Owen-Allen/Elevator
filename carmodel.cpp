@@ -11,6 +11,10 @@ CarModel::CarModel(int curr_floor, int dir):QObject(NULL)
     isPowerOut = false;
     isDoorBlocked = false;
     needHelp = false;
+
+    blockedCounter = 0;
+    helpCounter = 0;
+
     safeFloor = 1;
 }
 
@@ -138,13 +142,15 @@ void CarModel::emergency_destination(){
 
     calculate_direction();
 
-    current_floor += direction;
+    //current_floor += direction;
 
+    /*
     emit send_location_update(current_floor);
 
     if (current_floor == safeFloor){
         dropoff_passengers();
     }
+    */
 }
 
 
@@ -153,18 +159,32 @@ void CarModel::move(){
 
     // CHECK ALL THE HAZARDS
 
-    if(isOverload){
+    //if(isOverload){
 
-    }else if(isFire){
+    //}else if(isFire){
 
-    }else if(isPowerOut){
+    //}else if(isPowerOut){
 
-    }else if(isDoorBlocked){
+    if(needHelp){
+            helpCounter += 1;
+            qDebug() << "Someone needs help " << helpCounter;
 
-    }else if(needHelp){
+            if(helpCounter > 3){
+                qDebug() << "DID NOT RECIEVE RESPONSE FROM BUILDING SAFETY, CALLING 911";
+            }
+    }
 
-    }else{ // Everything is working properly
-        // Update the current floor
+    if(isDoorBlocked){
+        blockedCounter += 1;
+        qDebug() << "Elevator did not move, door is blocked";
+        if(blockedCounter > 3){
+            qDebug() << "WARNING: PLEASE UNBLOCK DOOR";
+        }
+    }else if(isOverload){
+        qDebug() << "Elevator is overloaded, please exit the elevator";
+    }else{
+
+        // If we reached this case, then we can reset the blockedCounter
         current_floor += direction;
 
         emit send_location_update(current_floor);
@@ -188,20 +208,40 @@ void CarModel::move(){
 }
 
 void CarModel::receive_overload(){
-    isOverload = true;
+    // Flip the value, so that if we recieve the signal again, we've simulated it becoming
+    // normal again
+    isOverload = !isOverload;
 }
+
 void CarModel::receive_fire(){
     isFire = true;
+    emergency_destination();
 }
+
 void CarModel::receive_power(){
     isPowerOut = true;
+    emergency_destination();
 }
+
 void CarModel::receive_door(){
-    isDoorBlocked = true;
+    // Flip the value, so that if we recieve the signal again, we've simulated it becoming
+    // normal again
+    if(isDoorBlocked == false){
+        isDoorBlocked = true;
+    }else{
+        isDoorBlocked = false;
+        blockedCounter = 0;
+    }
 }
 
 void CarModel::receive_help(){
-    needHelp = true;
+    if(needHelp == false){
+        needHelp = true;
+    }else{
+        // reset
+        needHelp = false;
+        helpCounter = 0;
+    }
 }
 
 

@@ -39,7 +39,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     for (int i = 0; i < NUM_CARS; i++){
         cars[i] = new CarModel(curr_floor[i], dir[i]);
-        //connect(this, SIGNAL(request_upcoming_passenger(Passenger*)), cars[i], SLOT(add_to_upcoming_passengers(Passenger*)));
+        connect(this, SIGNAL(send_overload()), cars[i], SLOT(receive_overload()));
+        connect(this, SIGNAL(send_fire()), cars[i], SLOT(receive_fire()));
+        connect(this, SIGNAL(send_powerout()), cars[i], SLOT(receive_power()));
+        connect(this, SIGNAL(send_doorblocked()), cars[i], SLOT(receive_door()));
+        connect(this, SIGNAL(send_help()), cars[i], SLOT(receive_help()));
     }
 
     QString display_string = QString();
@@ -63,30 +67,42 @@ MainWindow::~MainWindow()
 
 
 void MainWindow::overload_sensor(){ //
-    qInfo("overload");
-}
+    qInfo("Sending overload simulation");
+    this->send_overload();}
 
 void MainWindow::fire_sensor(){
-    qInfo("fire in da boof");
+    qInfo("Sending fire signal simulation");
+    this->send_fire();
 }
 
 void MainWindow::power_sensor(){
-    qInfo("eh wheres da power");
+    qInfo("Sending power simulation");
+    this->send_powerout();
 }
 
 void MainWindow::door_sensor(){
-    qInfo("Door sensor");
+    if(cars[0] -> isDoorBlocked == false){
+        qDebug() << "BLOCKING DOORS";
+        this->send_doorblocked();
+    }else{
+        qDebug() << "UNBLOCKING DOORS";
+        this->send_doorblocked();
+    }
 }
 
 void MainWindow::help(){
-    qInfo("Help");
+    if(cars[0] -> needHelp == false){
+        qDebug() << "sending need help signal";
+        this->send_help();
+    }else{
+        qDebug() << "setting needHelp back to false";
+        this->send_doorblocked();
+    }
 }
 
 
-void MainWindow::normal(){
-    // GAME LOOP SHOULD OCCUR HERE
-    qInfo("Normal");
 
+void MainWindow::normal(){
     std::list<Passenger*>:: iterator it = pickup_requests.begin();
     while(it != pickup_requests.end()){
         if(determine_elevator(*it)){
@@ -95,7 +111,7 @@ void MainWindow::normal(){
                 // so we can remove them from pickup_requests
             it = pickup_requests.erase(it);
         }else{
-            qDebug() << "could not add " << (*it)->name << " to an upcoming_pickup";
+            qDebug() << "could not add " << (*it)->name << " to an upcoming_pickup, we will try again later";
             ++it;
         }
     }
@@ -108,12 +124,7 @@ void MainWindow::normal(){
         display_string.append(cars[e]->toString()).append("\n");
     }
     ui->label->setText(display_string);
-    control_clock->start(5000);
-    /*
-        qDebug() << "Front of pickup_requests " << pickup_requests.front()->toString();
-        connect(pickup_requests.front(), SIGNAL(request_elevator(Passenger*)), cars[0], SLOT(add_to_upcoming_passengers(Passenger*)));
-        pickup_requests.front() -> send_elevator_request();
-    */
+    //control_clock->start(5000);
 }
 
 
@@ -136,45 +147,31 @@ bool MainWindow::determine_elevator(Passenger* p){
 
     for(int e = 0; e < NUM_CARS; e++){
         qDebug() << cars[e]->toString();
-    /*
-        if(cars[e]->direction == 0 || ((cars[e]->direction == p->direction) && (cars[e]->current_floor < p->current_floor)) || ((cars[e]->direction == p->direction) && (cars[e]->current_floor > p->current_floor))){
-            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            p->send_elevator_request();
-            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            qDebug() << "Car after update " << cars[e]->toString();
-            return true;
-        }
-        */
-        if(cars[e]-> direction == 0){
-            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            p->send_elevator_request();
-            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            qDebug() << "Car after update " << cars[e]->toString();
-            return true;
-        }else if(cars[e]->direction == 1 && p->direction == 1 && p->current_floor > cars[e]->current_floor){ // elevator can head up toward the person
-            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            p->send_elevator_request();
-            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            qDebug() << "Car after update " << cars[e]->toString();
-            return true;
-        }else if(cars[e]->direction == -1 && p->direction == -1 && p->current_floor < cars[e]->current_floor){ // elevator can head down to pickup the person
-            connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            p->send_elevator_request();
-            disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
-            qDebug() << "Car after update " << cars[e]->toString();
-            return true;
+
+        if(!cars[e] -> isOverload && !cars[e] -> isFire && !cars[e] -> needHelp){ // If the elevator is having any of these issues, it cannot be called
+            if(cars[e]-> direction == 0){
+                connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+                p->send_elevator_request();
+                disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+                //qDebug() << "Car after update " << cars[e]->toString();
+                return true;
+            }else if(cars[e]->direction == 1 && p->direction == 1 && p->current_floor > cars[e]->current_floor){ // elevator can head up toward the person
+                connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+                p->send_elevator_request();
+                disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+                //qDebug() << "Car after update " << cars[e]->toString();
+                return true;
+            }else if(cars[e]->direction == -1 && p->direction == -1 && p->current_floor < cars[e]->current_floor){ // elevator can head down to pickup the person
+                connect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+                p->send_elevator_request();
+                disconnect(p, SIGNAL(request_elevator(Passenger*)), cars[e], SLOT(add_to_upcoming_passengers(Passenger*)));
+                //qDebug() << "Car after update " << cars[e]->toString();
+                return true;
+            }
         }
     }
     return false; // Could not find a suitable elevator, try again next iteration
 }
-
-/*
-// SLOTS
-void MainWindow::add_request(Passenger* p){
-    pickup_requests.push_front(p);
-}
-*/
-
 
 
 

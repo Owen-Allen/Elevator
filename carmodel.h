@@ -42,13 +42,18 @@ public:
 
     QString toString();
 
-private:
     bool isOverload;
     bool isFire;
     bool isPowerOut;
     bool isDoorBlocked;
     bool needHelp;
+
+private:
+
     int safeFloor;
+
+    int blockedCounter; // used to track how many rounds the door has been blocked
+    int helpCounter;    // used to check if the user in need of help has
 
     void emergency_destination();
 
